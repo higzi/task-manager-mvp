@@ -1,0 +1,197 @@
+/* App.css */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-color: #121212;
+  --surface-color: #1e1e1e;
+  --surface-hover: #2a2a2a;
+  --primary: #646cff; 
+  --primary-hover: #535bf2;
+  --accent-red: #ef4444;
+  --accent-green: #10b981;
+  --accent-yellow: #f59e0b;
+  --text-main: #ffffff;
+  --text-secondary: #a1a1aa;
+  --border-color: #333333;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 900px; 
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #a78bfa, #646cff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.demo-badge {
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-yellow);
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* === ФОРМА === */
+.task-form {
+  display: flex;
+  flex-direction: column; /* Mobile First: колонка */
+  gap: 12px;
+  background-color: var(--surface-color);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 30px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  width: 100%; /* Гарантируем, что форма не шире родителя */
+}
+
+.input-field {
+  background-color: #252525;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  /* Важно: позволяет инпуту сжиматься в Grid, если места мало */
+  min-width: 0; 
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  background-color: #2a2a2a;
+}
+
+.btn-add {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.1s;
+  margin-top: 4px;
+}
+
+.btn-add:active {
+  transform: scale(0.98);
+}
+
+/* === ТАБЛИЦА === */
+.table-container {
+  width: 100%;
+  overflow-x: auto; 
+  background-color: var(--surface-color);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; 
+}
+
+.task-table th {
+  background-color: #252525;
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.task-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.task-table tr:last-child td {
+  border-bottom: none;
+}
+
+.score-cell { font-family: monospace; font-weight: 700; font-size: 1.1rem; }
+.score-high { color: var(--accent-red); }
+.score-med { color: var(--accent-yellow); }
+.score-low { color: var(--accent-green); }
+
+/* === DESKTOP STYLES === */
+@media (min-width: 768px) {
+  .app-container {
+    padding: 40px 20px;
+  }
+
+  .header {
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .demo-badge {
+    margin-bottom: 30px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  /* Сетка формы для десктопа */
+  .task-form {
+    display: grid;
+    grid-template-columns: 3fr 2fr 1fr 1fr auto; 
+    align-items: center;
+  }
+  
+  .btn-add {
+    margin-top: 0;
+    height: 100%;
+  }
+}
