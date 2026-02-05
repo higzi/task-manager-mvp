@@ -1,5 +1,6 @@
-/* App.css */
+/* App.css - Final UX Fix */
 
+/* 1. Глобальный сброс для надежности */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -38,14 +39,14 @@ body {
 
 .app-container {
   width: 100%;
-  max-width: 900px; 
+  max-width: 800px; /* Чуть уменьшил ширину для аккуратности */
   padding: 20px;
-  margin-top: 20px;
+  margin-top: 40px;
 }
 
 .header {
   margin-bottom: 24px;
-  text-align: center;
+  text-align: left; /* Заголовок слева выглядит строже */
 }
 
 .title {
@@ -65,133 +66,297 @@ body {
   border-radius: 8px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 30px;
   font-size: 0.9rem;
-  text-align: center;
 }
 
-/* === ФОРМА === */
+/* === ФОРМА (Сетка) === */
 .task-form {
   display: flex;
-  flex-direction: column; /* Mobile First: колонка */
-  gap: 12px;
+  flex-direction: column;
+  gap: 16px;
   background-color: var(--surface-color);
-  padding: 20px;
+  padding: 24px;
   border-radius: 16px;
   border: 1px solid var(--border-color);
-  margin-bottom: 30px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-  width: 100%; /* Гарантируем, что форма не шире родителя */
+  margin-bottom: 40px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  width: 100%;
 }
 
+.form-row {
+  display: grid;
+  gap: 16px;
+}
+
+/* Стили полей ввода */
 .input-field {
   background-color: #252525;
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 12px 16px;
+  padding: 0 16px;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: all 0.2s;
-  /* Важно: позволяет инпуту сжиматься в Grid, если места мало */
-  min-width: 0; 
+  height: 48px; /* Увеличил высоту для удобства */
+  width: 100%;
+  min-width: 0; /* Важно для Grid! */
+}
+
+/* Белая иконка календаря */
+.input-field[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.input-field[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 .input-field:focus {
   outline: none;
   border-color: var(--primary);
   background-color: #2a2a2a;
+  box-shadow: 0 0 0 4px rgba(100, 108, 255, 0.1);
 }
 
 .btn-add {
   background-color: var(--primary);
   color: white;
   border: none;
-  padding: 12px;
+  padding: 0 24px;
+  height: 48px; /* Высота совпадает с инпутами */
   border-radius: 8px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.1s;
-  margin-top: 4px;
+  transition: all 0.2s;
+}
+
+.btn-add:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .btn-add:active {
-  transform: scale(0.98);
+  transform: translateY(0);
+}
+
+/* Лейблы и Слайдер */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative; /* Чтобы элементы позиционировались внутри */
+}
+
+.form-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between; /* Разносит текст и цифру по краям */
+}
+
+/* Цифра важности */
+.importance-val {
+  color: var(--primary);
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.input-range {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #333;
+  border-radius: 4px;
+  outline: none;
+  margin-top: auto; /* Прибивает к низу контейнера */
+  margin-bottom: 8px;
+}
+
+.input-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid #fff;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.input-range::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
 }
 
 /* === ТАБЛИЦА === */
 .table-container {
-  width: 100%;
-  overflow-x: auto; 
-  background-color: var(--surface-color);
   border-radius: 12px;
   border: 1px solid var(--border-color);
+  overflow: hidden; /* Скругляем углы у таблицы */
 }
 
 .task-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px; 
 }
 
 .task-table th {
-  background-color: #252525;
+  background-color: #222;
   text-align: left;
-  padding: 14px 16px;
-  font-size: 0.8rem;
+  padding: 16px;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .task-table td {
-  padding: 14px 16px;
+  padding: 16px;
   border-bottom: 1px solid var(--border-color);
+  background-color: var(--surface-color);
 }
 
 .task-table tr:last-child td {
   border-bottom: none;
 }
 
-.score-cell { font-family: monospace; font-weight: 700; font-size: 1.1rem; }
-.score-high { color: var(--accent-red); }
-.score-med { color: var(--accent-yellow); }
-.score-low { color: var(--accent-green); }
+/* Цвета Score */
+.score-cell { font-family: monospace; font-weight: 700; font-size: 1rem; }
+.score-high { color: #f87171; }
+.score-med { color: #facc15; }
+.score-low { color: #4ade80; }
 
-/* === DESKTOP STYLES === */
+/* === АДАПТИВ (Mobile First -> Desktop) === */
+
+/* На мобильных (по умолчанию) все идет колонкой (flex-direction: column у .task-form) */
+
 @media (min-width: 768px) {
-  .app-container {
-    padding: 40px 20px;
-  }
-
-  .header {
-    text-align: left;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .title {
-    font-size: 2.5rem;
-  }
-
-  .demo-badge {
-    margin-bottom: 30px;
-    justify-content: flex-start;
-    text-align: left;
-  }
-
-  /* Сетка формы для десктопа */
+  /* На десктопе меняем сетку на 2-уровневую */
+  
   .task-form {
     display: grid;
-    grid-template-columns: 3fr 2fr 1fr 1fr auto; 
-    align-items: center;
+    /* Определяем области (Grid Areas):
+      "header header header header"
+      "date   imp    comp   btn"
+    */
+    grid-template-areas: 
+      "title title title title"
+      "date  imp   comp  btn";
+    grid-template-columns: 1fr 1fr 1fr auto; /* Пропорции нижней строки */
+    gap: 20px;
   }
-  
-  .btn-add {
-    margin-top: 0;
-    height: 100%;
-  }
+
+  /* Назначаем полям их области */
+  .title-group { grid-area: title; }
+  .date-group { grid-area: date; }
+  .imp-group { grid-area: imp; }
+  .comp-group { grid-area: comp; }
+  .btn-group { grid-area: btn; align-self: end; } /* Кнопка прижата к низу */
+}
+
+.welcome-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: var(--bg-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; /* Поверх всего */
+  padding: 20px;
+}
+
+.welcome-content {
+  text-align: center;
+  max-width: 600px;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.logo-icon {
+  font-size: 5rem;
+  margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #a78bfa 0%, #646cff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 16px 0;
+  line-height: 1.1;
+}
+
+.hero-subtitle {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+.hero-btn {
+  background: linear-gradient(90deg, #646cff, #a78bfa);
+  color: white;
+  border: none;
+  padding: 16px 48px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 10px 20px rgba(100, 108, 255, 0.3);
+}
+
+.hero-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(100, 108, 255, 0.5);
+}
+
+.hero-btn:active {
+  transform: translateY(1px);
+}
+
+.features-grid {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 50px;
+  flex-wrap: wrap;
+}
+
+.feature-item {
+  background: var(--surface-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .hero-title { font-size: 2.5rem; }
+  .hero-subtitle { font-size: 1rem; }
+  .hero-btn { width: 100%; }
 }
