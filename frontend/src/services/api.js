@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export const getTasks = async () => {
   const res = await fetch(`${API_URL}/tasks`);
@@ -16,4 +16,5 @@ export const createTask = async (task) => {
   if (!res.ok) throw new Error("Failed to create task");
   return res.json();
 };
+
 
