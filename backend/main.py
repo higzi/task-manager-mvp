@@ -50,7 +50,7 @@ def create_task(task: Task):
     priority = calculate_priority(task)
     
     task_dict = task.dict()
-    task_dict["priority"] = round(priority, 3)
+    task_dict["score"] = round(priority, 3)
 
     tasks.append(task_dict)
     return task_dict
