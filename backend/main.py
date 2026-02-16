@@ -1,33 +1,43 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from datetime import date, datetime
+from datetime import date
 from typing import List
-import math
 
 app = FastAPI()
 
-# --- CORS ---
+# ---------------- CORS ----------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # для MVP можно так, потом лучше указать конкретный origin
+    allow_origins=["*"],  # для MVP
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- In-memory storage ---
-tasks = []
+# ---------------- In-memory storage ----------------
+tasks: List[dict] = []
+current_id = 1
 
-# --- Модель данных ---
-class Task(BaseModel):
-    id: int
+
+# ---------------- Models ----------------
+
+# Модель входящих данных (БЕЗ id и score)
+class TaskCreate(BaseModel):
     title: str
     deadline: date
     importance: int = Field(ge=1, le=10)
     complexity: int = Field(gt=0)
 
-# --- Функция коэффициента срочности ---
+
+# Модель ответа (с id и score)
+class TaskResponse(TaskCreate):
+    id: int
+    score: float
+
+
+# ---------------- Business Logic ----------------
+
 def urgency_coefficient(deadline: date) -> float:
     today = date.today()
     days_left = (deadline - today).days
@@ -39,28 +49,39 @@ def urgency_coefficient(deadline: date) -> float:
     else:
         return 1.0
 
-# --- Расчет приоритета ---
-def calculate_priority(task: Task) -> float:
+
+def calculate_score(task: TaskCreate) -> float:
     coef = urgency_coefficient(task.deadline)
     return (task.importance * coef) / task.complexity
 
-# --- POST /tasks ---
-@app.post("/tasks")
-def create_task(task: Task):
-    priority = calculate_priority(task)
-    
+
+# ---------------- Endpoints ----------------
+
+@app.post("/tasks", response_model=TaskResponse)
+def create_task(task: TaskCreate):
+    global current_id
+
+    score = round(calculate_score(task), 3)
+
     task_dict = task.dict()
-    task_dict["score"] = round(priority, 3)
+    task_dict["id"] = current_id
+    task_dict["score"] = score
 
     tasks.append(task_dict)
+    current_id += 1
+
     return task_dict
 
-# --- GET /tasks ---
-@app.get("/tasks")
+
+@app.get("/tasks", response_model=List[TaskResponse])
 def get_tasks():
-    sorted_tasks = sorted(
+    return sorted(
         tasks,
-        key=lambda t: t["priority"],
+        key=lambda t: t["score"],
         reverse=True
     )
-    return sorted_tasks
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
