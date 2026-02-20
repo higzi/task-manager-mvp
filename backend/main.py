@@ -1,118 +1,101 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 from datetime import date
-from typing import List
+import uuid
+
+from database import engine, Base, get_db
+from models import User, Task
+from schemas import UserAuth, Token, TaskCreate, TaskResponse
+
 
 app = FastAPI()
 
-# ---------------- CORS ----------------
+Base.metadata.create_all(bind=engine)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # для MVP
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ---------------- In-memory storage ----------------
-tasks: List[dict] = []
-current_id = 1
-
-
-# ---------------- Models ----------------
-
-# Модель для авторизации и регистрации
-class UserAuth(BaseModel):
-    username: str
-    password: str
-
-# Модель входящих данных (БЕЗ id и score)
-class TaskCreate(BaseModel):
-    title: str
-    deadline: date
-    importance: int = Field(ge=1, le=10)
-    complexity: int = Field(gt=0)
-
-
-# Модель ответа (с id и score)
-class TaskResponse(TaskCreate):
-    id: int
-    score: float
-
-
-# ---------------- Business Logic ----------------
-
-def urgency_coefficient(deadline: date) -> float:
+def calculate_score(importance: int, complexity: int, deadline: date) -> float:
     today = date.today()
     days_left = (deadline - today).days
+    coef = 3.0 if days_left <= 1 else 1.5 if days_left <= 7 else 1.0
+    return round((importance * coef) / complexity, 3)
 
-    if days_left <= 1:
-        return 3.0
-    elif days_left <= 7:
-        return 1.5
-    else:
-        return 1.0
+# TODO: реализовать JWT
+def get_password_hash(password: str) -> str:
+    return password + "hashed"
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return plain_password + "hashed" == hashed_password
+
+# TODO: Написать нормальную проверку токена
+def get_current_user(db: Session = Depends(get_db)):
+    # ВРЕМЕННЫЙ ХАК: берем первого юзера из базы, пока нет JWT-токенов
+    user = db.query(User).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return user
 
 
-def calculate_score(task: TaskCreate) -> float:
-    coef = urgency_coefficient(task.deadline)
-    return (task.importance * coef) / task.complexity
-
-
-# ---------------- Auth Endpoints (Stubs) ----------------
-
-@app.post("/register")
-def register(user: UserAuth):
-    # Пока это заглушка, возвращаем успешный статус
-    return {"message": f"User {user.username} created successfully"}
-
-@app.post("/login")
-def login(user: UserAuth):
-    # Фейковая проверка и выдача токена
-    if user.username and user.password:
-        return {"access_token": "fake-jwt-token-12345", "token_type": "bearer"}
+@app.post("/register", response_model=dict)
+def register(user: UserAuth, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.username).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Пользователь уже существует")
     
-    raise HTTPException(status_code=400, detail="Неверный логин или пароль")
+    new_user = User(
+        email=user.username, 
+        password_hash=get_password_hash(user.password)
+    )
+    db.add(new_user)
+    db.commit()
+    return {"message": "Успешная регистрация"}
 
+@app.post("/login", response_model=Token)
+def login(user: UserAuth, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.username).first()
+    if not db_user or not verify_password(user.password, db_user.password_hash):
+        raise HTTPException(status_code=400, detail="Неверный логин или пароль")
+    
+    # TODO: Сгенерировать настоящий JWT токен
+    return {"access_token": f"fake-token-for-{db_user.id}", "token_type": "bearer"}
 
-# ---------------- Task Endpoints ----------------
 
 @app.post("/tasks", response_model=TaskResponse)
-def create_task(task: TaskCreate):
-    global current_id
-
-    score = round(calculate_score(task), 3)
-
-    task_dict = task.dict()
-    task_dict["id"] = current_id
-    task_dict["score"] = score
-
-    tasks.append(task_dict)
-    current_id += 1
-
-    return task_dict
-
-
-@app.get("/tasks", response_model=List[TaskResponse])
-def get_tasks():
-    return sorted(
-        tasks,
-        key=lambda t: t["score"],
-        reverse=True
+def create_task(task: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    score = calculate_score(task.importance, task.complexity, task.deadline)
+    
+    new_task = Task(
+        user_id=current_user.id,
+        title=task.title,
+        deadline=task.deadline,
+        importance=task.importance,
+        complexity=task.complexity,
+        score=score,
+        status_id=1
     )
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+    return new_task
 
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
-# ----------------- Delete Endpoint -------------------------
+@app.get("/tasks", response_model=list[TaskResponse])
+def get_tasks(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    tasks = db.query(Task).filter(Task.user_id == current_user.id).order_by(Task.score.desc()).all()
+    return tasks
 
 @app.delete("/tasks/{task_id}")
-def delete_task(task_id: int):
-    global tasks
-    # Оставляем в списке только те задачи, ID которых не совпадает с удаляемым
-    tasks = [t for t in tasks if t["id"] != task_id]
-    return {"message": "Task deleted successfully"}
+def delete_task(task_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found or forbidden")
+    
+    db.delete(task)
+    db.commit()
+    return {"message": "Task deleted"}
 
