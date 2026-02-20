@@ -98,3 +98,4 @@ def delete_task(task_id: uuid.UUID, db: Session = Depends(get_db), current_user:
     db.delete(task)
     db.commit()
     return {"message": "Task deleted"}
+
