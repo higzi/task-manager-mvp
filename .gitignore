@@ -1,3 +1,17 @@
-node_modules
+# Node.js (Frontend)
+node_modules/
+dist/
+dist-ssr/
+.eslintrc.cjs
+
+# Python (Backend)
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
 .env
-dist
+
+# OS Files
+.DS_Store
+Thumbs.db
