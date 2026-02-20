@@ -5,7 +5,8 @@ from sqlalchemy.sql import func
 from database import Base
 
 class User(Base):
-    tablename = "users"
+    __tablename__ = "users"  # Исправлено: добавлены двойные подчеркивания
+    
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False) 
     password_hash = Column(String(255), nullable=False)
@@ -13,7 +14,8 @@ class User(Base):
     authorized_at = Column(DateTime, default=func.now())
 
 class Task(Base):
-    tablename = "tasks"
+    __tablename__ = "tasks"  
+    
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     title = Column(String(255), nullable=False)
