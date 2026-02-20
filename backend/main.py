@@ -13,14 +13,12 @@ from database import engine, Base, get_db
 from models import User, Task
 from schemas import UserAuth, Token, TaskCreate, TaskResponse
 
-# Подгружаем локальные переменные из .env
 load_dotenv()
 
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
-# Настройка CORS для работы с фронтендом
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -29,7 +27,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- СТРОГАЯ НАСТРОЙКА БЕЗОПАСНОСТИ ---
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 if not SECRET_KEY:
@@ -40,12 +37,11 @@ if not SECRET_KEY:
     )
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # Токен живет 24 часа
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-# --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -83,7 +79,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
-# --- ЭНДПОИНТЫ API ---
 @app.post("/register", response_model=dict)
 def register(user: UserAuth, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.username).first()
