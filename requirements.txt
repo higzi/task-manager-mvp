@@ -1,4 +1,8 @@
 fastapi
 uvicorn[standard]
 python-dotenv
-sqlalchemy psycorg2-binary
+sqlalchemy
+psycopg2-binary
+PyJWT
+passlib[bcrypt]
+bcrypt==4.0.1
