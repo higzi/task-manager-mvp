@@ -73,9 +73,16 @@ npm run dev
 ```
 ---
 ## 👨‍💻 Команда
- higzi — Frontend Development, Security & System Integration
+Команда разработки:
 
- enflou — Backend & Database Architecture
+Тим лид/архитект - тема
+Бекенд - даня
+Frontend Development, Security & System Integration - андрей 
 
+Команда развития:
+
+ux/ui (поддержка идеи дизайнов) - кристина
+QA - никита
+Product / Analyst / Documentation - толя
 2026
 
