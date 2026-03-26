@@ -1,8 +1,0 @@
-fastapi
-uvicorn[standard]
-python-dotenv
-SQLAlchemy>=2.0,<3.0
-psycopg2-binary
-PyJWT
-passlib[bcrypt]
-bcrypt==4.0.1
