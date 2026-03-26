@@ -32,7 +32,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 if not SECRET_KEY:
     raise ValueError(
-        "🚨 КРИТИЧЕСКАЯ ОШИБКА: SECRET_KEY не задан! "
+        " КРИТИЧЕСКАЯ ОШИБКА: SECRET_KEY не задан! "
         "Добавь его в файл .env (SECRET_KEY=твой_ключ) для локальной разработки "
         "или в Environment Variables на сервере Render."
     )
