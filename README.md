@@ -90,9 +90,7 @@ npm run dev
 
 ## 🌐 Деплой
 
-* Frontend: https://task-manager-app-higzi.netlify.app/
-* Backend: https://task-manager-mvp.onrender.com
-* Self-hosted (Docker + Nginx): *(в процессе)*
+* Self-hosted (Docker + Nginx): https://task-manager-higzi.ru
 
 ---
 
