@@ -1,18 +1,18 @@
 import os
-print(os.listdir('.'))
+import secrets
+import uuid
+import jwt
+from datetime import date, datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from datetime import date, datetime, timedelta, timezone
-import uuid
-import jwt
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 
 from database import engine, Base, get_db
 from models import User, Task
-from schemas import UserAuth, Token, TaskCreate, TaskResponse
+from schemas import UserAuth, Token, TaskCreate, TaskResponse, ResetPasswordRequest, NewPasswordRequest
 
 load_dotenv()
 
@@ -22,7 +22,7 @@ Base.metadata.create_all(bind=engine)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,11 +31,7 @@ app.add_middleware(
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 if not SECRET_KEY:
-    raise ValueError(
-        " КРИТИЧЕСКАЯ ОШИБКА: SECRET_KEY не задан! "
-        "Добавь его в файл .env (SECRET_KEY=твой_ключ) для локальной разработки "
-        "или в Environment Variables на сервере Render."
-    )
+    raise ValueError("SECRET_KEY not set")
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
@@ -64,12 +60,12 @@ def calculate_score(importance: int, complexity: int, deadline: date) -> float:
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Недействительный токен или срок его действия истек",
+        detail="Invalid token",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
+        user_id = payload.get("sub")
         if user_id is None:
             raise credentials_exception
     except jwt.PyJWTError:
@@ -84,24 +80,49 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 def register(user: UserAuth, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.username).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Пользователь уже существует")
+        raise HTTPException(status_code=400, detail="User exists")
     
     new_user = User(
-        email=user.username, 
+        email=user.username,
         password_hash=get_password_hash(user.password)
     )
     db.add(new_user)
     db.commit()
-    return {"message": "Успешная регистрация"}
+    return {"message": "Registered"}
 
 @app.post("/login", response_model=Token)
 def login(user: UserAuth, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.username).first()
     if not db_user or not verify_password(user.password, db_user.password_hash):
-        raise HTTPException(status_code=400, detail="Неверный логин или пароль")
+        raise HTTPException(status_code=400, detail="Invalid credentials")
     
     access_token = create_access_token(data={"sub": str(db_user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/reset-password")
+def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    token = secrets.token_hex(32)
+    user.reset_token = token
+    user.reset_token_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    db.commit()
+    return {"token": token}
+
+@app.post("/new-password")
+def set_new_password(request: NewPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(
+        User.reset_token == request.token,
+        User.reset_token_expiry > datetime.now(timezone.utc)
+    ).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    user.password_hash = get_password_hash(request.password)
+    user.reset_token = None
+    user.reset_token_expiry = None
+    db.commit()
+    return {"message": "Password updated"}
 
 @app.post("/tasks", response_model=TaskResponse)
 def create_task(task: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -123,15 +144,13 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db), current_user: U
 
 @app.get("/tasks", response_model=list[TaskResponse])
 def get_tasks(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    tasks = db.query(Task).filter(Task.user_id == current_user.id).order_by(Task.score.desc()).all()
-    return tasks
+    return db.query(Task).filter(Task.user_id == current_user.id).order_by(Task.score.desc()).all()
 
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
     if not task:
-        raise HTTPException(status_code=404, detail="Задача не найдена или нет прав")
-    
+        raise HTTPException(status_code=404, detail="Not found")
     db.delete(task)
     db.commit()
-    return {"message": "Task deleted"}
+    return {"message": "Deleted"}
