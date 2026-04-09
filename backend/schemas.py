@@ -1,9 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from datetime import date
 from uuid import UUID
 
 class UserAuth(BaseModel):
-    username: str 
+    username: str
     password: str
 
 class Token(BaseModel):
@@ -23,3 +23,10 @@ class TaskResponse(TaskCreate):
 
     class Config:
         from_attributes = True
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+
+class NewPasswordRequest(BaseModel):
+    token: str
+    password: str
